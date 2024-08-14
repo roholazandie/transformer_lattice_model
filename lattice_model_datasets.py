@@ -113,3 +113,64 @@ class GoldenMeanShiftDataset(Dataset):
             'input_ids': bits_tokens,
             'attention_mask': attention_mask,
         }
+
+import itertools
+
+# class IrreducibleRepresentationSymmetryGroupDataset(Dataset):
+#     def __init__(self, n_samples, partitions, random_seed=42):
+#         self.n_samples = n_samples
+#         self.partitions = partitions
+#         all_permutations = []
+#         partition_permutations = [list(itertools.permutations(partition)) for partition in partitions]
+#         all_combinations = list(itertools.product(*partition_permutations))
+#         self.all_combinations = [sum(combination, ()) for combination in all_combinations]
+#         self.samples = [random.sample(self.all_combinations, 1)[0] for _ in range(n_samples)]
+#
+#
+#     def __len__(self):
+#         return self.n_samples
+#
+#     def __getitem__(self, idx):
+#
+#         return {
+#             'input_ids': torch.tensor(self.samples[idx], dtype=torch.int64),
+#             'attention_mask': torch.ones(len(self.samples[idx]))  # all ones, since we don't have any padding tokens
+#         }
+
+class IrreducibleRepresentationSymmetryGroupDataset(Dataset):
+    def __init__(self, partitions, random_seed=42):
+        self.partitions = partitions
+        self.random_seed = random_seed
+        random.seed(random_seed)
+
+    def __len__(self):
+        return 1  # Length is not relevant for infinite generation
+
+    def __getitem__(self, idx):
+        sampled_combination = [self.random_permutation(partition) for partition in self.partitions]
+        sample = {
+            'input_ids': torch.tensor(sum(sampled_combination, ()), dtype=torch.int64),
+            'attention_mask': torch.ones(len(sum(sampled_combination, ())))
+            # all ones, since we don't have any padding tokens
+        }
+        return sample
+
+    def __iter__(self):
+        while True:
+            sampled_combination = [self.random_permutation(partition) for partition in self.partitions]
+            self.current_sample = {
+                'input_ids': torch.tensor(sum(sampled_combination, ()), dtype=torch.int64),
+                'attention_mask': torch.ones(len(sum(sampled_combination, ())))  # all ones, since we don't have any padding tokens
+            }
+            yield self.current_sample
+
+    def random_permutation(self, partition):
+        return tuple(random.sample(partition, len(partition)))
+
+
+if __name__ == "__main__":
+    partitions = [[1,2,3], [4, 5], [6]]
+    partitions = [[i for i in range(5, 20)], [i for i in range(20, 24)], [i for i in range(24, 30)]]
+    dataset = IrreducibleRepresentationSymmetryGroupDataset(partitions)
+    for x in dataset:
+        print(x)

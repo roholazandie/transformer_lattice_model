@@ -221,27 +221,35 @@ if __name__ == '__main__':
     # Train the model
     trainer.train()
 
-    # # Inferencing
-    # input_ids = tokenizer.encode("64, 32")
-    # input_ids = torch.tensor(input_ids, dtype=torch.long).unsqueeze(0).to(device)
-    # outputs = []
-    # while True:
-    #     output = model.generate(input_ids, max_length=128, num_return_sequences=1, do_sample=True)
-    #     outputs.append(output)
-    #     if len(outputs) == 10:
-    #         break
-    # outputs = [tokenizer.decode(output[0].tolist()) for output in outputs]
-    # data = [output.split(',') for output in outputs]
-    # # plot the histogram
-    # import matplotlib.pyplot as plt
-    #
-    # # Plotting the histogram
-    # plt.hist(data, bins=5, edgecolor='black')
-    #
-    # # Adding title and labels
-    # plt.title('Histogram of Sample Data')
-    # plt.xlabel('Value')
-    # plt.ylabel('Frequency')
-    #
-    # # Display the histogram
-    # plt.show()
+    # Inferencing
+    input_ids = tokenizer.encode("64, 32")
+    input_ids = torch.tensor(input_ids, dtype=torch.long).unsqueeze(0).to(device)
+    outputs = []
+    while True:
+        output = model.generate(input_ids, max_length=128, num_return_sequences=1, do_sample=True)
+        outputs.append(output)
+        if len(outputs) == 50:
+            break
+
+    # flatten the list
+    outputs = [tokenizer.decode(output[0].tolist()) for output in outputs]
+    data1 = [[int(x) for x in output.split(',')] for output in outputs]
+    # flatten the list
+    data1 = [item for sublist in data1 for item in sublist]
+    # plot the histogram
+    import matplotlib.pyplot as plt
+
+    data2 = np.random.choice(len(gaussian_dist), len(data1), p=gaussian_dist)
+
+    # Plotting the histograms
+    plt.hist(data1, bins=20, edgecolor='black', alpha=0.5, label='Generated')
+    plt.hist(data2, bins=20, edgecolor='black', alpha=0.5, label='Gaussion')
+
+    # Adding title and labels
+    plt.title('Histogram of Sample Data')
+    plt.xlabel('Value')
+    plt.ylabel('Frequency')
+    plt.legend()
+
+    # Display the histogram
+    plt.show()
